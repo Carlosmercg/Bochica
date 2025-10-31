@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'auth/screens/pantalla_inicio.dart';
+import 'core/routes/app_routes.dart';
 
 void main() {
   runApp(const MiApp());
@@ -17,7 +17,8 @@ class MiApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const PantallaInicio(),
+      initialRoute: AppRoutes.authWelcome,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }
