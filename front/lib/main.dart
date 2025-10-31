@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/routes/app_routes.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp();
+    print('✅ Firebase conectado correctamente');
+  } catch (e) {
+    print('❌ Error al conectar con Firebase: $e');
+  }
+
   runApp(const MiApp());
 }
 
