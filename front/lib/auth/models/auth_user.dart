@@ -3,11 +3,7 @@ class AuthUser {
   final String email;
   final String? displayName;
 
-  const AuthUser({
-    required this.id,
-    required this.email,
-    this.displayName,
-  });
+  const AuthUser({required this.id, required this.email, this.displayName});
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
@@ -18,12 +14,6 @@ class AuthUser {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'email': email,
-      'displayName': displayName,
-    };
+    return {'id': id, 'email': email, 'displayName': displayName};
   }
 }
-
-
