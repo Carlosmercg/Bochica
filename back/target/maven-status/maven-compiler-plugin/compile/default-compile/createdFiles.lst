@@ -1,2 +1,5 @@
-com\bochica\back\BackApplication.class
-com\bochica\config\FirebaseConfig.class
+com/bochica/back/BackApplication.class
+com/bochica/config/SecurityConfig.class
+com/bochica/back/UserController.class
+com/bochica/config/FirebaseConfig.class
+com/bochica/config/FirebaseTokenFilter.class
