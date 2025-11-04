@@ -24,18 +24,21 @@ class AuthBienvenidaScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.water_drop, size: 96, color: Colors.white),
                   const SizedBox(height: 12),
-                  const Text('BOCHICA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 24)),
-                  const SizedBox(height: 32),
                   const Text(
-                    'Bienvenido a la nueva era del ahorro',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 20),
+                    'BOCHICA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.authLogin),
+                      onPressed:
+                          () =>
+                              Navigator.pushNamed(context, AppRoutes.authLogin),
                       child: const Text('Ingresa'),
                     ),
                   ),
@@ -43,7 +46,11 @@ class AuthBienvenidaScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.authRegister),
+                      onPressed:
+                          () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.authRegister,
+                          ),
                       child: const Text('Regístrate'),
                     ),
                   ),
@@ -56,5 +63,3 @@ class AuthBienvenidaScreen extends StatelessWidget {
     );
   }
 }
-
-

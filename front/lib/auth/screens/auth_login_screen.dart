@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/routes/app_routes.dart';
 import '../../core/services/auth_service.dart';
 
 class AuthLoginScreen extends StatefulWidget {
@@ -27,11 +28,18 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     setState(() => _loading = true);
     try {
       await context.read<AuthService>().signInWithEmail(
-        email: _emailCtrl.text,
-        password: _passCtrl.text,
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text.trim(),
       );
-      if (mounted) Navigator.of(context).pop(); // o pushNamed a tu dashboard
-    } on Exception catch (e) {
+
+      if (!mounted) return;
+      // Limpia el stack y entra al dashboard
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.dashboardGeneralUsuario,
+        (_) => false,
+      );
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -77,6 +85,15 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                     _loading
                         ? const CircularProgressIndicator()
                         : const Text('Entrar'),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed:
+                    () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.authRegister,
+                    ),
+                child: const Text('¿No tienes cuenta? Regístrate'),
               ),
             ],
           ),
