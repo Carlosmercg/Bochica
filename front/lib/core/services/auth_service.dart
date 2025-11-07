@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'user_stats_service.dart';
+import 'backend_service.dart';
 
 class AuthService with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserStatsService _userStatsService = UserStatsService();
+  final BackendService _backendService = BackendService();
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -52,8 +54,22 @@ class AuthService with ChangeNotifier {
           debugPrint('[AuthService] ❌ ERROR al inicializar UserStats (NO bloquea el registro):');
           debugPrint('[AuthService]    - Error: $e');
           debugPrint('[AuthService]    - Tipo: ${e.runtimeType}');
-          // Opcional: puedes lanzar el error si quieres que falle el registro
-          // throw e;
+        }
+        
+        // Registrar el usuario activo en el backend para que reciba datos del Arduino
+        debugPrint('[AuthService] 🔗 Registrando usuario activo en el backend...');
+        try {
+          final token = await user.getIdToken();
+          if (token != null && token.isNotEmpty) {
+            await _backendService.registerActiveUser(token);
+            debugPrint('[AuthService] ✅ Usuario registrado en el backend exitosamente');
+          } else {
+            debugPrint('[AuthService] ⚠️ No se pudo obtener el token de Firebase');
+          }
+        } catch (e) {
+          // Si falla, no bloquea el registro pero se registra el error
+          debugPrint('[AuthService] ❌ ERROR al registrar usuario en el backend (NO bloquea el registro):');
+          debugPrint('[AuthService]    - Error: $e');
         }
       } else {
         debugPrint('[AuthService] ⚠️ ADVERTENCIA: Usuario registrado pero user es null');
@@ -105,8 +121,22 @@ class AuthService with ChangeNotifier {
           debugPrint('[AuthService] ❌ ERROR al inicializar UserStats (NO bloquea el login):');
           debugPrint('[AuthService]    - Error: $e');
           debugPrint('[AuthService]    - Tipo: ${e.runtimeType}');
-          // Opcional: puedes lanzar el error si quieres que falle el login
-          // throw e;
+        }
+        
+        // Registrar el usuario activo en el backend para que reciba datos del Arduino
+        debugPrint('[AuthService] 🔗 Registrando usuario activo en el backend...');
+        try {
+          final token = await user.getIdToken();
+          if (token != null && token.isNotEmpty) {
+            await _backendService.registerActiveUser(token);
+            debugPrint('[AuthService] ✅ Usuario registrado en el backend exitosamente');
+          } else {
+            debugPrint('[AuthService] ⚠️ No se pudo obtener el token de Firebase');
+          }
+        } catch (e) {
+          // Si falla, no bloquea el login pero se registra el error
+          debugPrint('[AuthService] ❌ ERROR al registrar usuario en el backend (NO bloquea el login):');
+          debugPrint('[AuthService]    - Error: $e');
         }
       } else {
         debugPrint('[AuthService] ⚠️ ADVERTENCIA: Usuario autenticado pero user es null');
@@ -126,6 +156,16 @@ class AuthService with ChangeNotifier {
 
   /// Cerrar sesión
   Future<void> signOut() async {
+    // Desregistrar el usuario activo del backend antes de cerrar sesión
+    debugPrint('[AuthService] 🔗 Desregistrando usuario activo del backend...');
+    try {
+      await _backendService.logoutActiveUser();
+      debugPrint('[AuthService] ✅ Usuario desregistrado del backend');
+    } catch (e) {
+      debugPrint('[AuthService] ❌ ERROR al desregistrar usuario del backend: $e');
+      // No bloquear el logout si falla
+    }
+    
     await _auth.signOut();
     notifyListeners();
   }
