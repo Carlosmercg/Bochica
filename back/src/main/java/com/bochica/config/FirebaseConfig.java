@@ -1,10 +1,8 @@
 package com.bochica.config;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.InputStream;
 
-import javax.annotation.PostConstruct;
-
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -14,18 +12,28 @@ import com.google.firebase.FirebaseOptions;
 @Configuration
 public class FirebaseConfig {
 
-    @PostConstruct
-    public void initFirebase() throws IOException {
-        FileInputStream serviceAccount = 
-            new FileInputStream("src/main/resources/firebase/bochica-firebase-adminsdk.json");
+    @Bean
+    public FirebaseApp firebaseApp() throws Exception {
+        if (!FirebaseApp.getApps().isEmpty()) {
+            return FirebaseApp.getInstance();
+        }
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build();
+        try (InputStream serviceAccount = this.getClass()
+                .getClassLoader()
+                .getResourceAsStream("firebase/bochica-55981-firebase-adminsdk-fbsvc-9467f4578d.json")) {
 
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options);
-            System.out.println("🔥 Firebase conectado con éxito");
-        }  
+            if (serviceAccount == null) {
+                throw new IllegalStateException(
+                    "No se encontró firebase/bochica-55981-firebase-adminsdk-fbsvc-9467f4578d.json en resources");
+            }
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
+
+            FirebaseApp app = FirebaseApp.initializeApp(options);
+            System.out.println("🔥 Firebase Admin inicializado correctamente");
+            return app;
+        }
     }
 }
