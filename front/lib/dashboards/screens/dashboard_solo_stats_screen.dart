@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:front/core/routes/app_routes.dart';
 
 class DashboardSoloStatsScreen extends StatelessWidget {
   const DashboardSoloStatsScreen({super.key});
@@ -531,18 +532,25 @@ class _CtaBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        children: const [
-          TextSpan(text: '¡Ingresa a tu estrategia '),
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pushNamed(context, AppRoutes.chatbotRecomendaciones),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text.rich(
           TextSpan(
-            text: 'inteligente!',
-            style: TextStyle(color: Color(0xFFE24D5C)),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            children: const [
+              TextSpan(text: '¡Ingresa a tu estrategia '),
+              TextSpan(
+                text: 'inteligente!',
+                style: TextStyle(color: Color(0xFFE24D5C)),
+              ),
+            ],
           ),
-        ],
+          textAlign: TextAlign.center,
+        ),
       ),
-      textAlign: TextAlign.center,
     );
   }
 }

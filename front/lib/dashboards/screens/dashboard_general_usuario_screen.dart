@@ -88,7 +88,7 @@ class _Header extends StatelessWidget {
         const SizedBox(width: 8),
         // Botón chat
         IconButton(
-          onPressed: () {},
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.chatbot),
           icon: const Icon(Icons.chat_bubble_outline),
           tooltip: 'Chat',
         ),
@@ -296,7 +296,7 @@ class _TipOfDayCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.tiendaHome),
             icon: const Icon(Icons.storefront_outlined, size: 18),
             label: const Text('TIENDA'),
           ),
