@@ -41,7 +41,15 @@ class TiendaDetalleProductoScreen extends StatelessWidget {
               ),
               FilledButton(
                 onPressed: () {
+<<<<<<< HEAD
                   Navigator.pushNamed(context, AppRoutes.tiendaCompraInfo, arguments: producto);
+=======
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.tiendaCompraInfo,
+                    arguments: producto,
+                  );
+>>>>>>> 7278422fab9b7f798348c44b5deda41397079e09
                 },
                 child: const Text('Comprar'),
               ),

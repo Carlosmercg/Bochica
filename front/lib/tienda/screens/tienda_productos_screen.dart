@@ -9,6 +9,31 @@ import '../services/products_repository.dart';
 class TiendaProductosScreen extends StatelessWidget {
   const TiendaProductosScreen({super.key});
 
+  List<Producto> get _items => const [
+    Producto(
+      id: 'sanitario',
+      nombre: 'Sanitario Bochica',
+      descripcion: 'Kit de dispositivos para convertir tu inodoro en inteligente.',
+      precio: 500000,
+    ),
+    Producto(
+      id: 'ducha',
+      nombre: 'Ducha Bochica',
+      descripcion: 'Regulador inteligente para ahorro de agua en la ducha.',
+      precio: 350000,
+    ),
+    Producto(
+      id: 'lavadora',
+      nombre: 'Lavadora Bochica',
+      descripcion: 'Módulo de control de consumo para lavadoras convencionales.',
+      precio: 420000,
+    ),
+  ];
+
+  void _abrirDetalle(BuildContext ctx, Producto p) {
+    Navigator.pushNamed(ctx, AppRoutes.tiendaDetalle, arguments: p);
+  }
+
   @override
   Widget build(BuildContext context) {
     final repo = ProductsRepository();
