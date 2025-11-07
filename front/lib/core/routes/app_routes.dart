@@ -14,6 +14,8 @@ import '../../tienda/screens/tienda_productos_screen.dart';
 import '../../tienda/screens/tienda_detalle_producto_screen.dart';
 import '../../tienda/screens/tienda_compra_info_screen.dart';
 import '../../tienda/screens/tienda_compra_resultado_screen.dart';
+import '../../registro_disp/screens/registro_disp_estados_screen.dart';
+import '../../registro_disp/screens/registro_disp_interacciones_screen.dart';
 
 class AppRoutes {
   static const String authWelcome = '/auth/welcome';
@@ -31,6 +33,8 @@ class AppRoutes {
   static const String tiendaDetalle    = '/tienda/detalle';
   static const String tiendaCompraInfo = '/tienda/compra-info';
   static const String tiendaResultado  = '/tienda/compra-resultado';
+  static const String estados = '/estado';
+  static const String estadosHistorial = '/estado/historial';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -82,6 +86,18 @@ class AppRoutes {
           builder: (_) => const TiendaCompraResultadoScreen(),
           settings: settings,
         );
+      case estados:
+        return MaterialPageRoute(
+          builder: (_) => const RegistroDispEstadosScreen(),
+        );
+
+      case estadosHistorial:
+        // Recibe: {'deviceTitle': String, 'kind': 'sanitario'|'ducha', 'connected': bool}
+        return MaterialPageRoute(
+          builder: (_) => const RegistroDispInteraccionesScreen(),
+          settings: settings,
+        );
+
       default:
         return MaterialPageRoute(builder: (_) => const AuthBienvenidaScreen());
     }
