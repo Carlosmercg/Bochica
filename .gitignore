@@ -1,108 +1,110 @@
-# =========================================
-# 🌎 Proyecto Bochica (Flutter + Spring Boot)
-# =========================================
+# ==============================
+# 🔹 FLUTTER / DART
+# ==============================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+doc/api/
+**/.dart_tool/package_config.json
+**/.dart_tool/version
+**/windows/flutter/ephemeral/
 
-# =========================
-# 🔹 GENERALES DEL SISTEMA
-# =========================
-.DS_Store
-Thumbs.db
-*.log
-*.tmp
-*.swp
-*.swo
-*.bak
-*.old
-*.orig
-*.rej
-
-# =========================
-# 🔹 ENTORNO GLOBAL
-# =========================
+# ==============================
+# 🔹 IDEs & EDITORS
+# ==============================
 .idea/
 .vscode/
 *.iml
+*.ipr
+*.iws
 *.class
-*.jar
-*.war
-*.ear
-.gradle/
-build/
-target/
-out/
-logs/
-bin/
-tmp/
-.cache/
-.env
-.env.*
-!.env.example
-
-# ======================================
-# 🧱 BACKEND JAVA / SPRING BOOT (carpeta back/)
-# ======================================
-back/.mvn/
-back/mvnw
-back/mvnw.cmd
-back/target/
-back/build/
-back/.gradle/
-back/.idea/
-back/*.iml
-back/*.log
-back/*.tmp
-back/.classpath
-back/.project
-back/.settings/
-back/.apt_generated/
-back/.factorypath
-back/hs_err_pid*.log
-
-# 🔒 Credenciales Firebase / Config privadas
-back/src/main/resources/firebase/
-back/src/main/resources/*-service-account.json
-back/src/main/resources/application.properties
-back/src/main/resources/application.yml
-
-# ======================================
-# 📱 FRONTEND FLUTTER (carpeta front/)
-# ======================================
-front/.dart_tool/
-front/.flutter-plugins
-front/.flutter-plugins-dependencies
-front/.packages
-front/.metadata
-front/.fvm/
-front/build/
-front/ios/Flutter/Flutter.framework
-front/ios/Flutter/Flutter.podspec
-front/ios/Flutter/App.framework
-front/ios/Flutter/engine/
-front/ios/.symlinks/
-front/ios/Pods/
-front/ios/Runner/GeneratedPluginRegistrant.*
-front/macos/Flutter/GeneratedPluginRegistrant.swift
-front/windows/flutter/ephemeral/
-front/linux/flutter/ephemeral/
-front/web/.dart_tool/
-
-# 🔒 Archivos de credenciales Firebase
-front/android/app/google-services.json
-front/ios/Runner/GoogleService-Info.plist
-front/lib/firebase_options.dart
-
-# 🔧 Configs locales de usuario
-front/.vscode/
-front/pubspec.lock
-front/test/
-
-# =========================
-# 🔹 OTROS (opcional)
-# =========================
-*.keystore
-*.jks
-*.pem
-*.crt
-*.key
-*.p12
+*.log
+*.pyc
+*.swp
+*.swo
+*.tmp
 *.bak
+.DS_Store
+.atom/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# ==============================
+# 🔹 ANDROID
+# ==============================
+**/android/local.properties
+**/android/key.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+**/android/.gradle/
+**/android/build/
+**/android/captures/
+
+# ==============================
+# 🔹 iOS / MACOS
+# ==============================
+**/ios/Flutter/.last_build_id
+**/ios/.symlinks/
+**/ios/Pods/
+**/ios/build/
+**/ios/Runner.xcworkspace/
+**/ios/Runner.xcodeproj/project.xcworkspace/
+**/macos/Flutter/ephemeral/
+**/macos/build/
+
+# ==============================
+# 🔹 LINUX / WINDOWS / WEB
+# ==============================
+**/linux/build/
+**/windows/build/
+**/web/.dart_tool/
+**/web/build/
+
+# ==============================
+# 🔹 FIREBASE / SECRETS
+# ==============================
+**/firebase-service-account.json
+**/bochica-*-firebase-adminsdk-*.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# ==============================
+# 🔹 MISC
+# ==============================
+app.*.symbols
+app.*.map.json
+*.lock.hive
+*.lock.sqlite
+*.lock.db
+*.lock
+*.cache
+*.bak
+*.tmp
+*.old
+*.rej
+*.orig
+
+# ==============================
+# 🔹 NODE / JS (si usas scripts)
+# ==============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================
+# 🔹 LOGS / BACKUPS
+# ==============================
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo

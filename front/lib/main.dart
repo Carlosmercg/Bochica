@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+import 'core/services/auth_service.dart';
 import 'core/routes/app_routes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  try {
-    await Firebase.initializeApp();
-    print('✅ Firebase conectado correctamente');
-  } catch (e) {
-    print('❌ Error al conectar con Firebase: $e');
-  }
-
-  runApp(const MiApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthService())],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MiApp extends StatelessWidget {
-  const MiApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Mi App Flutter',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      title: 'Bochica',
+      theme: ThemeData(useMaterial3: true),
       initialRoute: AppRoutes.authWelcome,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
