@@ -84,12 +84,6 @@ class _DashboardSoloStatsScreenState extends State<DashboardSoloStatsScreen> {
                         key: ValueKey('donut-${user.uid}-$_refreshId'),
                         userId: user.uid,
                       ),
-                      footer: const _LegendRow(
-                        items: [
-                          _LegendItem('Ducha', Color(0xFF3B7BFF)),
-                          _LegendItem('Inodoro', Color(0xFF7B61FF)),
-                        ],
-                      ),
                     ),
                     const SizedBox(height: 12),
                     _StatCard(
@@ -109,12 +103,6 @@ class _DashboardSoloStatsScreenState extends State<DashboardSoloStatsScreen> {
                       title: 'Último Consumo',
                       trailing: _PeriodPill(text: 'Total'),
                       child: _DonutLastConsumption(),
-                      footer: _LegendRow(
-                        items: [
-                          _LegendItem('Ducha', Color(0xFF3B7BFF)),
-                          _LegendItem('Inodoro', Color(0xFF7B61FF)),
-                        ],
-                      ),
                     ),
                     const SizedBox(height: 12),
                     const _StatCard(
@@ -141,13 +129,11 @@ class _StatCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.trailing,
-    this.footer,
   });
 
   final String title;
   final Widget child;
   final Widget? trailing;
-  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +164,6 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           // contenido
           child,
-          if (footer != null) ...[const SizedBox(height: 10), footer!],
         ],
       ),
     );
@@ -430,60 +415,94 @@ class _DonutLastConsumptionState extends State<_DonutLastConsumption> {
       );
     }
 
-    final total = ducha + inodoro;
-    double duchaPercent = 0.0;
-    double inodoroPercent = 0.0;
+    final totalLiters = ducha + inodoro;
+    final duchaPercent = totalLiters > 0 ? ducha / totalLiters : 0.0;
+    final inodoroPercent = totalLiters > 0 ? inodoro / totalLiters : 0.0;
 
-    if (total > 0) {
-      duchaPercent = ducha / total;
-      inodoroPercent = inodoro / total;
-    }
-
-    return SizedBox(
-      height: 160,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _DonutPainterWidget(
-            shower: duchaPercent,
-            toilet: inodoroPercent,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 160,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _DonutPainterWidget(
+                showerPercent: duchaPercent,
+                toiletPercent: inodoroPercent,
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${totalLiters.toStringAsFixed(1)} L',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Total consumido',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          Positioned(
-            bottom: 6,
-            right: 12,
-            child: Text(
-              'Distribución',
-              style: TextStyle(color: Colors.black38),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            _LegendValue(
+              color: const Color(0xFF3B7BFF),
+              label: 'Ducha',
+              liters: ducha,
+              percent: duchaPercent,
             ),
-          ),
-        ],
-      ),
+            _LegendValue(
+              color: const Color(0xFF7B61FF),
+              label: 'Inodoro',
+              liters: inodoro,
+              percent: inodoroPercent,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
 class _DonutPainterWidget extends StatelessWidget {
   const _DonutPainterWidget({
-    required this.shower,
-    required this.toilet,
+    required this.showerPercent,
+    required this.toiletPercent,
   });
 
-  final double shower;
-  final double toilet;
+  final double showerPercent;
+  final double toiletPercent;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DonutPainter(shower, toilet),
+      painter: _DonutPainter(showerPercent, toiletPercent),
       child: const SizedBox.expand(),
     );
   }
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.shower, this.toilet);
-  final double shower;
-  final double toilet;
+  _DonutPainter(this.showerPercent, this.toiletPercent);
+  final double showerPercent;
+  final double toiletPercent;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -518,7 +537,7 @@ class _DonutPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     ];
 
-    final vals = [shower, toilet];
+    final vals = [showerPercent, toiletPercent];
     double start = -90;
 
     for (var i = 0; i < vals.length; i++) {
@@ -535,69 +554,56 @@ class _DonutPainter extends CustomPainter {
       }
     }
 
-    // texto central - mostrar total
-    final total = shower + toilet;
-    final totalText = total > 0 ? '${total.toStringAsFixed(1)}L' : '0L';
-    final tp = TextPainter(
-      text: TextSpan(
-        text: totalText,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          color: Colors.black87,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   double _deg2rad(double d) => d * 3.1415926535 / 180.0;
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
+      oldDelegate.showerPercent != showerPercent ||
+      oldDelegate.toiletPercent != toiletPercent;
 }
 
-class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.items});
-  final List<_LegendItem> items;
+class _LegendValue extends StatelessWidget {
+  const _LegendValue({
+    required this.color,
+    required this.label,
+    required this.liters,
+    required this.percent,
+  });
+
+  final Color color;
+  final String label;
+  final double liters;
+  final double percent;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 8,
-      children:
-          items
-              .map(
-                (e) => Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: e.color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      e.label,
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                ),
-              )
-              .toList(),
+    final percentDisplay = percent.isFinite
+        ? percent <= 0
+            ? '0'
+            : (percent * 100).toStringAsFixed(percent * 100 < 1 ? 1 : 0)
+        : '0';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$label · ${liters.toStringAsFixed(1)} L ($percentDisplay%)',
+          style: const TextStyle(color: Colors.black87),
+        ),
+      ],
     );
   }
-}
-
-class _LegendItem {
-  final String label;
-  final Color color;
-  const _LegendItem(this.label, this.color);
 }
 
 class _PeriodPill extends StatelessWidget {
