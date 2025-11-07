@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:front/core/routes/app_routes.dart';
+import 'package:front/core/services/auth_service.dart';
 
 class DashboardGeneralUsuarioScreen extends StatelessWidget {
   const DashboardGeneralUsuarioScreen({super.key});
@@ -8,14 +10,32 @@ class DashboardGeneralUsuarioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const brand = _Brand(); // colores y estilos base
+    final authService = context.watch<AuthService>();
+    final user = authService.currentUser;
+
+    // Obtener el nombre del usuario: displayName, o primera parte del email, o "Usuario"
+    String nombreUsuario = 'Usuario';
+    if (user != null) {
+      if (user.displayName != null && user.displayName!.isNotEmpty) {
+        nombreUsuario = user.displayName!;
+      } else if (user.email != null && user.email!.isNotEmpty) {
+        // Si no tiene displayName, usar la parte antes del @ del email
+        final emailPart = user.email!.split('@').first;
+        if (emailPart.isNotEmpty) {
+          // Capitalizar la primera letra
+          nombreUsuario = emailPart[0].toUpperCase() + 
+              (emailPart.length > 1 ? emailPart.substring(1) : '');
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: brand.bg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: const [
-            _Header(nombre: 'Mariana'),
+          children: [
+            _Header(nombre: nombreUsuario),
             SizedBox(height: 12),
             _SavingsCard(),
             SizedBox(height: 12),
