@@ -62,6 +62,7 @@ class DashboardGeneralUsuarioScreen extends StatelessWidget {
             case 2: /* Navigator.pushNamed(ctx, AppRoutes.vincular);   */
               break;
             case 3: /* Navigator.pushNamed(ctx, AppRoutes.estado);     */
+              Navigator.pushNamed(ctx, AppRoutes.estados);
               break;
             case 4: /* Navigator.pushNamed(ctx, AppRoutes.authProfile);*/
               break;
