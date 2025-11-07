@@ -21,18 +21,19 @@ class UserStatsService {
     }
   }
 
-  /// Crea un documento de UserStats para el usuario con valores iniciales
+  /// Crea un documento de UserStats para el usuario con solo el correo
+  /// Los consumos serán gestionados automáticamente por el backend cuando lleguen datos del Arduino
   /// Solo debe llamarse si no existe ya un documento para ese usuario
   Future<void> createUserStats(String userId, String email) async {
     try {
       debugPrint('[UserStatsService] 📝 Iniciando creación de UserStats para userId: $userId, email: $email');
       await _firestore.collection(_collection).doc(userId).set({
         'correo': email,
-        'consumoducha': 0,
-        'consumoinodoro': 0,
+        // Los consumos (consumosPorFecha) serán creados automáticamente por el backend
       });
       debugPrint('[UserStatsService] ✅ UserStats creado EXITOSAMENTE para userId: $userId, email: $email');
-      debugPrint('[UserStatsService] 📊 Datos creados: {correo: $email, consumoducha: 0, consumoinodoro: 0}');
+      debugPrint('[UserStatsService] 📊 Datos creados: {correo: $email}');
+      debugPrint('[UserStatsService] ℹ️ Los consumos serán gestionados por el backend cuando lleguen datos del Arduino');
     } catch (e) {
       debugPrint('[UserStatsService] ❌ ERROR al crear UserStats para userId: $userId, email: $email - Error: $e');
       debugPrint('[UserStatsService] ❌ Tipo de error: ${e.runtimeType}');
@@ -53,26 +54,18 @@ class UserStatsService {
     }
   }
 
-  /// Actualiza los valores de consumo
+  /// DEPRECADO: Los consumos ahora son gestionados automáticamente por el backend
+  /// Este método se mantiene por compatibilidad pero no debería usarse
+  /// Los consumos se actualizan automáticamente cuando el Arduino envía datos al backend
+  @Deprecated('Los consumos son gestionados por el backend. No usar este método.')
   Future<void> updateUserStats({
     required String userId,
     int? consumoducha,
     int? consumoinodoro,
   }) async {
-    try {
-      final updateData = <String, dynamic>{};
-
-      if (consumoducha != null) {
-        updateData['consumoducha'] = consumoducha;
-      }
-      if (consumoinodoro != null) {
-        updateData['consumoinodoro'] = consumoinodoro;
-      }
-
-      await _firestore.collection(_collection).doc(userId).update(updateData);
-    } catch (e) {
-      throw Exception('Error al actualizar UserStats: $e');
-    }
+    debugPrint('[UserStatsService] ⚠️ ADVERTENCIA: updateUserStats está deprecado. Los consumos son gestionados por el backend.');
+    // Este método ya no actualiza los consumos, solo se mantiene por compatibilidad
+    // Los consumos se actualizan automáticamente por el backend cuando llegan datos del Arduino
   }
 
   /// Inicializa o verifica que existe un documento de UserStats para el usuario actual
