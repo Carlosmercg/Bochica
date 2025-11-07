@@ -13,7 +13,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
-        throw UnsupportedError('Plataforma no configurada para Firebase.');
+        return linux;
       default:
         throw UnsupportedError('Plataforma no soportada.');
     }
@@ -29,6 +29,14 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyDu1MOcxfGZtrID0zX8BFsZVcG8DEqWVsU',
+    appId: '1:262250945867:android:1ce6be573e7f6f040f9cce',
+    messagingSenderId: '262250945867',
+    projectId: 'bochica-55981',
+    storageBucket: 'bochica-55981.firebasestorage.app',
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions( 
     apiKey: 'AIzaSyDu1MOcxfGZtrID0zX8BFsZVcG8DEqWVsU',
     appId: '1:262250945867:android:1ce6be573e7f6f040f9cce',
     messagingSenderId: '262250945867',

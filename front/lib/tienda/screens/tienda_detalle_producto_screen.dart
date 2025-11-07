@@ -19,9 +19,15 @@ class TiendaDetalleProductoScreen extends StatelessWidget {
             child: Container(
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.black12, borderRadius: BorderRadius.circular(16),
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.chair_alt_rounded, size: 100),
+              child: producto.imagen == null || producto.imagen!.isEmpty
+                  ? const Icon(Icons.chair_alt_rounded, size: 100)
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(producto.imagen!, fit: BoxFit.cover),
+                    ),
             ),
           ),
           const SizedBox(height: 12),
@@ -35,11 +41,7 @@ class TiendaDetalleProductoScreen extends StatelessWidget {
               ),
               FilledButton(
                 onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.tiendaCompraInfo,
-                    arguments: producto,
-                  );
+                  Navigator.pushNamed(context, AppRoutes.tiendaCompraInfo, arguments: producto);
                 },
                 child: const Text('Comprar'),
               ),
