@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:front/core/routes/app_routes.dart';
+import 'package:front/core/services/auth_service.dart';
+import 'package:front/core/services/user_stats_service.dart';
 
-class DashboardSoloStatsScreen extends StatelessWidget {
+class DashboardSoloStatsScreen extends StatefulWidget {
   const DashboardSoloStatsScreen({super.key});
+
+  @override
+  State<DashboardSoloStatsScreen> createState() => _DashboardSoloStatsScreenState();
+}
+
+class _DashboardSoloStatsScreenState extends State<DashboardSoloStatsScreen> {
+  int _refreshId = 0;
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _refreshId++;
+    });
+    // Give the UI a moment to rebuild before completing the refresh indicator
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,44 +48,86 @@ class DashboardSoloStatsScreen extends StatelessWidget {
             ],
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              _handleRefresh();
+            },
+            tooltip: 'Actualizar estadísticas',
+          ),
+        ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: const [
-            _StatCard(
-              title: 'Ahorro aproximado en la factura de agua',
-              child: _SavingsBarsMini(),
-            ),
-            SizedBox(height: 12),
-            _StatCard(
-              title: 'Último Consumo',
-              trailing: _PeriodPill(text: 'Apr–Jun'),
-              subtitleRight: Text(
-                '- 25%',
-                style: TextStyle(color: Colors.black54),
-              ),
-              child: _DonutLastConsumption(),
-              footer: _LegendRow(
-                items: [
-                  _LegendItem('Sanitario', Color(0xFF20C06D)),
-                  _LegendItem('Ducha', Color(0xFF3B7BFF)),
-                  _LegendItem('Inodoro', Color(0xFF7B61FF)),
+        child: Consumer<AuthService>(
+          builder: (context, authService, _) {
+            final user = authService.currentUser;
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  if (user != null) ...[
+                    _StatCard(
+                      title: 'Ahorro aproximado en la factura de agua',
+                      child: _SavingsBarsMini(
+                        key: ValueKey('savings-${user.uid}-$_refreshId'),
+                        userId: user.uid,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _StatCard(
+                      title: 'Último Consumo',
+                      trailing: const _PeriodPill(text: 'Total'),
+                      child: _DonutLastConsumption(
+                        key: ValueKey('donut-${user.uid}-$_refreshId'),
+                        userId: user.uid,
+                      ),
+                      footer: const _LegendRow(
+                        items: [
+                          _LegendItem('Ducha', Color(0xFF3B7BFF)),
+                          _LegendItem('Inodoro', Color(0xFF7B61FF)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _StatCard(
+                      title: 'Gasto con bochica vs gasto normal',
+                      child: _CompareBars(
+                        key: ValueKey('compare-${user.uid}-$_refreshId'),
+                        userId: user.uid,
+                      ),
+                    ),
+                  ] else ...[
+                    const _StatCard(
+                      title: 'Ahorro aproximado en la factura de agua',
+                      child: _SavingsBarsMini(),
+                    ),
+                    const SizedBox(height: 12),
+                    const _StatCard(
+                      title: 'Último Consumo',
+                      trailing: _PeriodPill(text: 'Total'),
+                      child: _DonutLastConsumption(),
+                      footer: _LegendRow(
+                        items: [
+                          _LegendItem('Ducha', Color(0xFF3B7BFF)),
+                          _LegendItem('Inodoro', Color(0xFF7B61FF)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const _StatCard(
+                      title: 'Gasto con bochica vs gasto normal',
+                      child: _CompareBars(),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const _CtaBanner(),
                 ],
               ),
-            ),
-            SizedBox(height: 12),
-            _StatCard(
-              title: 'Gasto con bochica vs gasto normal',
-              subtitleRight: Text(
-                '- 10%',
-                style: TextStyle(color: Colors.black54),
-              ),
-              child: _CompareBars(),
-            ),
-            SizedBox(height: 16),
-            _CtaBanner(),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -81,14 +141,12 @@ class _StatCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.trailing,
-    this.subtitleRight,
     this.footer,
   });
 
   final String title;
   final Widget child;
   final Widget? trailing;
-  final Widget? subtitleRight;
   final Widget? footer;
 
   @override
@@ -117,10 +175,6 @@ class _StatCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          if (subtitleRight != null) ...[
-            const SizedBox(height: 2),
-            Row(children: [const Spacer(), subtitleRight!]),
-          ],
           const SizedBox(height: 10),
           // contenido
           child,
@@ -133,8 +187,90 @@ class _StatCard extends StatelessWidget {
 
 /* =========================  CHART 1: AHORRO MINI  ========================= */
 
-class _SavingsBarsMini extends StatelessWidget {
-  const _SavingsBarsMini();
+class _SavingsBarsMini extends StatefulWidget {
+  const _SavingsBarsMini({super.key, this.userId});
+  final String? userId;
+
+  @override
+  State<_SavingsBarsMini> createState() => _SavingsBarsMiniState();
+}
+
+class _SavingsBarsMiniState extends State<_SavingsBarsMini> {
+  final UserStatsService _userStatsService = UserStatsService();
+  List<double> prom = [];
+  List<double> hoy = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userId != null) {
+      _loadData();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Obtener las últimas 6 fechas con consumo
+      final fechas = await _userStatsService.getFechasConConsumo(widget.userId!);
+      final fechasParaGrafico = fechas.take(6).toList();
+      
+      // Si hay menos de 6 fechas, rellenar con ceros
+      while (fechasParaGrafico.length < 6) {
+        fechasParaGrafico.add('');
+      }
+
+      List<double> promedios = [];
+      List<double> hoyValues = [];
+
+      // Calcular promedio de todas las fechas
+      double totalPromedio = 0.0;
+      int diasConDatos = 0;
+      
+      for (final fecha in fechas) {
+        final consumos = await _userStatsService.getConsumosPorFecha(widget.userId!, fecha);
+        final total = (consumos['consumoducha'] ?? 0.0) + (consumos['consumoinodoro'] ?? 0.0);
+        totalPromedio += total;
+        diasConDatos++;
+      }
+      
+      final promedioGeneral = diasConDatos > 0 ? totalPromedio / diasConDatos : 0.0;
+
+      // Para cada fecha en el gráfico
+      for (var i = 0; i < 6; i++) {
+        if (i < fechasParaGrafico.length && fechasParaGrafico[i].isNotEmpty) {
+          final consumos = await _userStatsService.getConsumosPorFecha(
+            widget.userId!, 
+            fechasParaGrafico[i]
+          );
+          final totalHoy = (consumos['consumoducha'] ?? 0.0) + (consumos['consumoinodoro'] ?? 0.0);
+          hoyValues.add(totalHoy);
+          promedios.add(promedioGeneral);
+        } else {
+          hoyValues.add(0.0);
+          promedios.add(promedioGeneral);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          prom = promedios;
+          hoy = hoyValues;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +282,9 @@ class _SavingsBarsMini extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           color: brand.chartBg,
-          child: CustomPaint(painter: _MiniBarsPainter()),
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : CustomPaint(painter: _MiniBarsPainter(prom: prom, hoy: hoy)),
         ),
       ),
     );
@@ -154,6 +292,10 @@ class _SavingsBarsMini extends StatelessWidget {
 }
 
 class _MiniBarsPainter extends CustomPainter {
+  _MiniBarsPainter({required this.prom, required this.hoy});
+  final List<double> prom;
+  final List<double> hoy;
+
   final _grid =
       Paint()
         ..color = Colors.white.withOpacity(.08)
@@ -197,12 +339,14 @@ class _MiniBarsPainter extends CustomPainter {
       end: Alignment.topCenter,
     );
 
-    final prom = [50, 60, 58, 72, 65, 70];
-    final hoy = [48, 55, 62, 68, 60, 66];
+    final allValues = [...prom, ...hoy];
+    final maxH = allValues.isEmpty 
+        ? 100.0 
+        : (allValues.reduce((a, b) => a > b ? a : b)) * 1.1;
+    
+    if (maxH == 0) return; // No hay datos para mostrar
 
-    final maxH = ([...prom, ...hoy].reduce((a, b) => a > b ? a : b)) * 1.1;
-
-    for (var i = 0; i < months; i++) {
+    for (var i = 0; i < months && i < prom.length && i < hoy.length; i++) {
       final x0 = rect.left + i * (pairW + pairGap);
       final hP = (prom[i] / maxH) * rect.height;
       final hH = (hoy[i] / maxH) * rect.height;
@@ -232,17 +376,78 @@ class _MiniBarsPainter extends CustomPainter {
 
 /* =========================  CHART 2: DONUT  ========================= */
 
-class _DonutLastConsumption extends StatelessWidget {
-  const _DonutLastConsumption();
+class _DonutLastConsumption extends StatefulWidget {
+  const _DonutLastConsumption({super.key, this.userId});
+  final String? userId;
+
+  @override
+  State<_DonutLastConsumption> createState() => _DonutLastConsumptionState();
+}
+
+class _DonutLastConsumptionState extends State<_DonutLastConsumption> {
+  final UserStatsService _userStatsService = UserStatsService();
+  double ducha = 0.0;
+  double inodoro = 0.0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userId != null) {
+      _loadData();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final consumos = await _userStatsService.getConsumosTotales(widget.userId!);
+      if (mounted) {
+        setState(() {
+          ducha = consumos['consumoducha'] ?? 0.0;
+          inodoro = consumos['consumoinodoro'] ?? 0.0;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const SizedBox(
+        height: 160,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final total = ducha + inodoro;
+    double duchaPercent = 0.0;
+    double inodoroPercent = 0.0;
+
+    if (total > 0) {
+      duchaPercent = ducha / total;
+      inodoroPercent = inodoro / total;
+    }
+
     return SizedBox(
       height: 160,
       child: Stack(
         alignment: Alignment.center,
-        children: const [
-          _DonutPainterWidget(sanitary: 0.35, shower: 0.45, toilet: 0.20),
+        children: [
+          _DonutPainterWidget(
+            shower: duchaPercent,
+            toilet: inodoroPercent,
+          ),
           Positioned(
             bottom: 6,
             right: 12,
@@ -259,28 +464,26 @@ class _DonutLastConsumption extends StatelessWidget {
 
 class _DonutPainterWidget extends StatelessWidget {
   const _DonutPainterWidget({
-    super.key,
-    required this.sanitary,
     required this.shower,
     required this.toilet,
   });
 
-  final double sanitary;
   final double shower;
   final double toilet;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DonutPainter(sanitary, shower, toilet),
+      painter: _DonutPainter(shower, toilet),
       child: const SizedBox.expand(),
     );
   }
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.a, this.b, this.c);
-  final double a, b, c;
+  _DonutPainter(this.shower, this.toilet);
+  final double shower;
+  final double toilet;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -301,13 +504,6 @@ class _DonutPainter extends CustomPainter {
     final paints = [
       Paint()
         ..shader = const LinearGradient(
-          colors: [Color(0xFF1AB56A), Color(0xFF37D07E)],
-        ).createShader(rect)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 22
-        ..strokeCap = StrokeCap.round,
-      Paint()
-        ..shader = const LinearGradient(
           colors: [Color(0xFF3B7BFF), Color(0xFF6AA0FF)],
         ).createShader(rect)
         ..style = PaintingStyle.stroke
@@ -322,26 +518,30 @@ class _DonutPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     ];
 
-    final vals = [a, b, c];
+    final vals = [shower, toilet];
     double start = -90;
 
     for (var i = 0; i < vals.length; i++) {
-      final sweep = vals[i] * 360;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        _deg2rad(start),
-        _deg2rad(sweep),
-        false,
-        paints[i],
-      );
-      start += sweep;
+      if (vals[i] > 0) {
+        final sweep = vals[i] * 360;
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: radius),
+          _deg2rad(start),
+          _deg2rad(sweep),
+          false,
+          paints[i],
+        );
+        start += sweep;
+      }
     }
 
-    // texto central
+    // texto central - mostrar total
+    final total = shower + toilet;
+    final totalText = total > 0 ? '${total.toStringAsFixed(1)}L' : '0L';
     final tp = TextPainter(
-      text: const TextSpan(
-        text: '-25%',
-        style: TextStyle(
+      text: TextSpan(
+        text: totalText,
+        style: const TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w800,
           color: Colors.black87,
@@ -418,8 +618,66 @@ class _PeriodPill extends StatelessWidget {
 
 /* =========================  CHART 3: COMPARATIVA  ========================= */
 
-class _CompareBars extends StatelessWidget {
-  const _CompareBars();
+class _CompareBars extends StatefulWidget {
+  const _CompareBars({super.key, this.userId});
+  final String? userId;
+
+  @override
+  State<_CompareBars> createState() => _CompareBarsState();
+}
+
+class _CompareBarsState extends State<_CompareBars> {
+  final UserStatsService _userStatsService = UserStatsService();
+  List<double> normal = [90.0, 120.0, 150.0];
+  List<double> bochica = [0.0, 0.0, 0.0];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userId != null) {
+      _loadData();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Obtener consumos totales
+      final consumos = await _userStatsService.getConsumosTotales(widget.userId!);
+      final totalBochica = (consumos['consumoducha'] ?? 0.0) + (consumos['consumoinodoro'] ?? 0.0);
+      
+      // Calcular promedios diarios (asumiendo que hay datos de varios días)
+      final fechas = await _userStatsService.getFechasConConsumo(widget.userId!);
+      final diasConDatos = fechas.length;
+      
+      final promedioDiario = diasConDatos > 0 ? totalBochica / diasConDatos : 0.0;
+      
+      // Normalizar a los niveles básico, promedio, alta
+      // Básico: 0-100, Promedio: 100-150, Alta: 150+
+      final basico = promedioDiario < 100 ? promedioDiario : 0.0;
+      final promedio = promedioDiario >= 100 && promedioDiario < 150 
+          ? promedioDiario 
+          : (promedioDiario >= 150 ? 0.0 : 0.0);
+      final alta = promedioDiario >= 150 ? promedioDiario : 0.0;
+
+      if (mounted) {
+        setState(() {
+          bochica = [basico, promedio, alta];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -431,7 +689,9 @@ class _CompareBars extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           color: brand.chartBg,
-          child: CustomPaint(painter: _CompareBarsPainter()),
+          child: isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : CustomPaint(painter: _CompareBarsPainter(normal: normal, bochica: bochica)),
         ),
       ),
     );
@@ -439,6 +699,10 @@ class _CompareBars extends StatelessWidget {
 }
 
 class _CompareBarsPainter extends CustomPainter {
+  _CompareBarsPainter({required this.normal, required this.bochica});
+  final List<double> normal;
+  final List<double> bochica;
+
   final _grid =
       Paint()
         ..color = Colors.white.withOpacity(.08)
@@ -472,11 +736,11 @@ class _CompareBarsPainter extends CustomPainter {
     );
 
     final labels = ['Básico', 'Promedio', 'Alta'];
-    final normal = [90.0, 120.0, 150.0];
-    final bochica = [80.0, 110.0, 135.0];
 
-    final maxH =
-        ([...normal, ...bochica].reduce((a, b) => a > b ? a : b)) * 1.1;
+    final allValues = [...normal, ...bochica];
+    final maxH = allValues.isEmpty 
+        ? 150.0 
+        : (allValues.reduce((a, b) => a > b ? a : b)) * 1.1;
 
     final groups = labels.length;
     final barW = 18.0;

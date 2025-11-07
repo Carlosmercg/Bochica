@@ -3,9 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:front/core/routes/app_routes.dart';
 import 'package:front/core/services/auth_service.dart';
+import 'package:front/core/services/user_stats_service.dart';
 
-class DashboardGeneralUsuarioScreen extends StatelessWidget {
+class DashboardGeneralUsuarioScreen extends StatefulWidget {
   const DashboardGeneralUsuarioScreen({super.key});
+
+  @override
+  State<DashboardGeneralUsuarioScreen> createState() => _DashboardGeneralUsuarioScreenState();
+}
+
+class _DashboardGeneralUsuarioScreenState extends State<DashboardGeneralUsuarioScreen> {
+  int _refreshId = 0;
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _refreshId++;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +38,7 @@ class DashboardGeneralUsuarioScreen extends StatelessWidget {
         final emailPart = user.email!.split('@').first;
         if (emailPart.isNotEmpty) {
           // Capitalizar la primera letra
-          nombreUsuario = emailPart[0].toUpperCase() + 
+          nombreUsuario = emailPart[0].toUpperCase() +
               (emailPart.length > 1 ? emailPart.substring(1) : '');
         }
       }
@@ -32,20 +47,60 @@ class DashboardGeneralUsuarioScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: brand.bg,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _Header(nombre: nombreUsuario),
-            SizedBox(height: 12),
-            _SavingsCard(),
-            SizedBox(height: 12),
-            _BarsCard(),
-            SizedBox(height: 12),
-            _ShowerGoalCard(),
-            SizedBox(height: 12),
-            _TipOfDayCard(),
-            SizedBox(height: 16),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            children: [
+              _Header(nombre: nombreUsuario),
+              const SizedBox(height: 12),
+              if (user != null)
+                _SavingsCard(
+                  key: ValueKey('savings-${user.uid}-$_refreshId'),
+                  userId: user.uid,
+                )
+              else
+                const SizedBox(),
+              const SizedBox(height: 12),
+              if (user != null)
+                _BarsCard(
+                  key: ValueKey('bars-${user.uid}-$_refreshId'),
+                  userId: user.uid,
+                )
+              else
+                const SizedBox(),
+              const SizedBox(height: 12),
+              const _ShowerGoalCard(),
+              const SizedBox(height: 12),
+              const _TipOfDayCard(),
+              const SizedBox(height: 24),
+              if (user != null)
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await context.read<AuthService>().signOut();
+                    if (!mounted) return;
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRoutes.authWelcome,
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Cerrar sesión'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brand.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
 
@@ -55,7 +110,15 @@ class DashboardGeneralUsuarioScreen extends StatelessWidget {
         onTap: (i, ctx) {
           // TODO: reemplaza por tus rutas reales si ya existen
           switch (i) {
-            case 0: /* Inicio */
+            case 0:
+              final currentRoute = ModalRoute.of(ctx)?.settings.name;
+              if (currentRoute != AppRoutes.dashboardGeneralUsuario) {
+                Navigator.pushNamedAndRemoveUntil(
+                  ctx,
+                  AppRoutes.dashboardGeneralUsuario,
+                  (route) => false,
+                );
+              }
               break;
             case 1: /* Navigator.pushNamed(ctx, AppRoutes.configurar); */
               break;
@@ -120,8 +183,44 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _SavingsCard extends StatelessWidget {
-  const _SavingsCard();
+class _SavingsCard extends StatefulWidget {
+  const _SavingsCard({super.key, required this.userId});
+  final String userId;
+
+  @override
+  State<_SavingsCard> createState() => _SavingsCardState();
+}
+
+class _SavingsCardState extends State<_SavingsCard> {
+  final UserStatsService _userStatsService = UserStatsService();
+  double consumoHoy = 0.0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConsumoHoy();
+  }
+
+  Future<void> _loadConsumoHoy() async {
+    try {
+      final consumos = await _userStatsService.getConsumosHoy(widget.userId);
+      final totalHoy = (consumos['consumoducha'] ?? 0.0) + (consumos['consumoinodoro'] ?? 0.0);
+      
+      if (mounted) {
+        setState(() {
+          consumoHoy = totalHoy;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,9 +248,11 @@ class _SavingsCard extends StatelessWidget {
                   text: TextSpan(
                     style: brand.body,
                     children: [
-                      const TextSpan(text: 'Hoy has ahorrado '),
+                      const TextSpan(text: 'Hoy has consumido '),
                       TextSpan(
-                        text: '12 litros',
+                        text: isLoading 
+                            ? '...' 
+                            : '${consumoHoy.toStringAsFixed(1)} litros',
                         style: brand.body.copyWith(
                           color: brand.primary,
                           fontWeight: FontWeight.w700,
@@ -177,26 +278,99 @@ class _SavingsCard extends StatelessWidget {
   }
 }
 
-class _BarsCard extends StatelessWidget {
-  const _BarsCard();
+class _BarsCard extends StatefulWidget {
+  const _BarsCard({super.key, required this.userId});
+  final String userId;
+
+  @override
+  State<_BarsCard> createState() => _BarsCardState();
+}
+
+class _BarsCardState extends State<_BarsCard> {
+  final UserStatsService _userStatsService = UserStatsService();
+  List<_GroupData> data = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Obtener consumos de hoy
+      final consumosHoy = await _userStatsService.getConsumosHoy(widget.userId);
+      final duchaHoy = consumosHoy['consumoducha'] ?? 0.0;
+      final inodoroHoy = consumosHoy['consumoinodoro'] ?? 0.0;
+
+      // Obtener todas las fechas para calcular promedios
+      final fechas = await _userStatsService.getFechasConConsumo(widget.userId);
+      
+      double totalDucha = 0.0;
+      double totalInodoro = 0.0;
+      int diasConDatos = 0;
+
+      // Calcular promedios basados en los últimos 7 días o todos los días disponibles
+      final fechasParaPromedio = fechas.take(7).toList();
+      
+      for (final fecha in fechasParaPromedio) {
+        final consumos = await _userStatsService.getConsumosPorFecha(widget.userId, fecha);
+        totalDucha += consumos['consumoducha'] ?? 0.0;
+        totalInodoro += consumos['consumoinodoro'] ?? 0.0;
+        diasConDatos++;
+      }
+
+      final promedioDucha = diasConDatos > 0 ? totalDucha / diasConDatos : duchaHoy;
+      final promedioInodoro = diasConDatos > 0 ? totalInodoro / diasConDatos : inodoroHoy;
+
+      if (mounted) {
+        setState(() {
+          data = [
+            _GroupData(
+              title: 'Ducha',
+              promedio: promedioDucha,
+              hoy: duchaHoy,
+            ),
+            _GroupData(
+              title: 'Inodoro',
+              promedio: promedioInodoro,
+              hoy: inodoroHoy,
+            ),
+          ];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const brand = _Brand();
 
-    // Datos “quemados” (ajústalos cuando conectes backend)
-    final data = const [
-      _GroupData(
-        title: 'Sanitario',
-        promedio: 100, // baseline
-        hoy: 95, // menor => +5% ahorro
-      ),
-      _GroupData(
-        title: 'Ducha',
-        promedio: 130,
-        hoy: 110, // menor => +15% ahorro
-      ),
-    ];
+    if (isLoading) {
+      return _Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 220,
+              decoration: BoxDecoration(
+                color: brand.chartBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+      );
+    }
 
     return _Card(
       child: Column(
@@ -209,7 +383,9 @@ class _BarsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: _GroupedBarsChart(data: data),
+            child: data.isEmpty 
+                ? const Center(child: Text('No hay datos disponibles'))
+                : _GroupedBarsChart(data: data),
           ),
           const SizedBox(height: 8),
           Row(
@@ -222,13 +398,11 @@ class _BarsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // 👉 Link: consulta tu ecosistema (aquí)
           GestureDetector(
-            onTap:
-                () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.dashboardStatsUsuario,
-                ),
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.dashboardStatsUsuario,
+            ),
             child: Text('> consulta tu ecosistema', style: brand.link),
           ),
         ],
@@ -454,7 +628,7 @@ class _GroupData {
 }
 
 class _GroupedBarsChart extends StatelessWidget {
-  const _GroupedBarsChart({super.key, required this.data});
+  const _GroupedBarsChart({required this.data});
   final List<_GroupData> data;
 
   @override
@@ -672,144 +846,6 @@ class _LineChartPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(painter: _LinePainter(), child: const SizedBox.expand());
   }
-}
-
-class _BarsTwoGroupsPlaceholder extends StatelessWidget {
-  const _BarsTwoGroupsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    // Datos “quemados” para simular tu ejemplo
-    const promedioColor = Colors.deepPurple;
-    const hoyColor = Colors.green;
-
-    return LayoutBuilder(
-      builder: (_, c) {
-        final groupWidth = (c.maxWidth - 32) / 2; // dos grupos con margen
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _group(
-              width: groupWidth,
-              title: 'Sanitario',
-              bars: const [
-                _BarData(
-                  label: 'Promedio',
-                  value: 70,
-                  color: promedioColor,
-                  percentLabel: '+5%',
-                ),
-                _BarData(label: 'Hoy', value: 90, color: hoyColor),
-              ],
-            ),
-            _group(
-              width: groupWidth,
-              title: 'Ducha',
-              bars: const [
-                _BarData(label: 'Promedio', value: 140, color: promedioColor),
-                _BarData(
-                  label: 'Hoy',
-                  value: 110,
-                  color: hoyColor,
-                  percentLabel: '-15%',
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _group({
-    required double width,
-    required String title,
-    required List<_BarData> bars,
-  }) {
-    // Altura útil para barras
-    const double chartHeight = 130;
-    const double barWidth = 26;
-
-    return SizedBox(
-      width: width,
-      child: Column(
-        children: [
-          SizedBox(
-            height: chartHeight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children:
-                  bars.map((b) {
-                    return Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        // barra
-                        Container(
-                          width: barWidth,
-                          height: b.value.toDouble().clamp(
-                            12,
-                            chartHeight,
-                          ), // altura simulada
-                          decoration: BoxDecoration(
-                            color: b.color,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        // % arriba
-                        if (b.percentLabel != null)
-                          Positioned(
-                            bottom:
-                                b.value.toDouble().clamp(12, chartHeight) + 6,
-                            child: Text(
-                              b.percentLabel!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        // etiqueta inferior (Promedio / Hoy)
-                        Positioned(
-                          bottom: -22,
-                          child: Text(
-                            b.label,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-            ),
-          ),
-          const SizedBox(
-            height: 22,
-          ), // espacio para labels inferiores de cada barra
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BarData {
-  final String label;
-  final int value; // altura “ficticia”
-  final Color color;
-  final String? percentLabel;
-  const _BarData({
-    required this.label,
-    required this.value,
-    required this.color,
-    this.percentLabel,
-  });
 }
 
 /* =====================  ESTILOS / PINTURAS  ===================== */
