@@ -1,0 +1,94 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
+
+// ⚙️ Configura tus credenciales WiFi
+const char* ssid = "*******";
+const char* password = "******";
+
+// ⚙️ URL del backend (usa tu IP local, NO localhost)
+const char* serverUrl = "http://192.168.1.4:8080/public/arduino/data";
+
+// Pines del ESP8266 (GPIO equivalentes a D5 y D6)
+#define BOTON_TOGGLE 14      // D5
+#define BOTON_MOMENTANEO 12  // D6
+
+bool estadoToggle = false; // se alterna cada vez que se pulsa el botón de toggle
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(BOTON_TOGGLE, INPUT_PULLUP);
+  pinMode(BOTON_MOMENTANEO, INPUT_PULLUP);
+
+  Serial.println("Conectando a WiFi...");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ Conectado a WiFi");
+}
+
+void loop() {
+  static bool ultimoEstadoToggle = HIGH;
+  static bool ultimoEstadoMomentaneo = HIGH;
+
+  bool lecturaToggle = digitalRead(BOTON_TOGGLE);
+  bool lecturaMomentaneo = digitalRead(BOTON_MOMENTANEO);
+
+  // Detectar pulsación (borde descendente)
+  if (lecturaToggle == LOW && ultimoEstadoToggle == HIGH) {
+    estadoToggle = !estadoToggle;  // alternar estado
+    Serial.printf("Botón Toggle -> %s\n", estadoToggle ? "ACTIVO" : "INACTIVO");
+    enviarDatos(estadoToggle, false);
+  }
+
+  // Si el botón momentáneo está presionado
+  if (lecturaMomentaneo == LOW && ultimoEstadoMomentaneo == HIGH) {
+    Serial.println("Botón Momentáneo presionado");
+    enviarDatos(estadoToggle, true);
+  }
+
+  // Si se suelta el botón momentáneo
+  if (lecturaMomentaneo == HIGH && ultimoEstadoMomentaneo == LOW) {
+    Serial.println("Botón Momentáneo liberado");
+    enviarDatos(estadoToggle, false);
+  }
+
+  ultimoEstadoToggle = lecturaToggle;
+  ultimoEstadoMomentaneo = lecturaMomentaneo;
+
+  delay(100);
+}
+
+void enviarDatos(bool toggle, bool momentaneo) {
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;          // 👈 nuevo objeto cliente
+    HTTPClient http;
+    http.begin(client, serverUrl);   // 👈 nueva sintaxis obligatoria
+    http.addHeader("Content-Type", "application/json");
+
+    // Construir JSON
+    StaticJsonDocument<200> doc;
+    doc["toggle"] = toggle;
+    doc["momentaneo"] = momentaneo;
+    doc["timestamp"] = millis();
+
+    String body;
+    serializeJson(doc, body);
+
+    int code = http.POST(body);
+    Serial.printf("Enviado (%d): %s\n", code, body.c_str());
+
+    if (code > 0) {
+      String response = http.getString();
+      Serial.println("Respuesta del servidor: " + response);
+    } else {
+      Serial.printf("Error HTTP: %s\n", http.errorToString(code).c_str());
+    }
+
+    http.end();
+  } else {
+    Serial.println("⚠️ WiFi no conectado");
+  }
+}
