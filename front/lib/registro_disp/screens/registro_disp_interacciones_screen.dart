@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/user_stats_repository.dart';
+import '../../core/routes/app_routes.dart';
 
 class RegistroDispInteraccionesScreen extends StatelessWidget {
   const RegistroDispInteraccionesScreen({super.key});
@@ -17,9 +18,9 @@ class RegistroDispInteraccionesScreen extends StatelessWidget {
     final df = DateFormat('dd/MM/yyyy'); // sólo fecha (tu dato no trae hora)
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1F6),
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F1F6),
+        backgroundColor: const Color(0xFFF5F6FA),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -64,27 +65,6 @@ class RegistroDispInteraccionesScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Barra de buscar (sólo UI)
-              Row(
-                children: [
-                  _GhostSquare(icon: Icons.tune_rounded, onTap: () {}),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        isDense: true,
-                        prefixIcon: const Icon(Icons.search),
-                        hintText: 'Buscar',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
               // Tabla con datos en vivo desde Firestore
               Expanded(
                 child: StreamBuilder<List<ConsumoDiario>>(
@@ -119,26 +99,50 @@ class RegistroDispInteraccionesScreen extends StatelessWidget {
                         ],
                       ),
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('Fecha')),
-                            DataColumn(label: Text('Ducha (L)')),
-                            DataColumn(label: Text('Inodoro (L)')),
-                            DataColumn(label: Text('')),
-                          ],
-                          rows: rows
-                              .map(
-                                (e) => DataRow(
-                                  cells: [
-                                    DataCell(Text(df.format(e.fecha))),
-                                    DataCell(Text('${e.consumoDucha}')),
-                                    DataCell(Text('${e.consumoInodoro}')),
-                                    const DataCell(Icon(Icons.remove_red_eye_outlined)),
-                                  ],
+                        scrollDirection: Axis.horizontal,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: DataTable(
+                            columnSpacing: 24,
+                            columns: const [
+                              DataColumn(label: Text('Fecha', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                              DataColumn(
+                                label: Text('Ducha (L)', 
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                  textAlign: TextAlign.center,
                                 ),
-                              )
-                              .toList(),
+                                numeric: true,
+                              ),
+                              DataColumn(
+                                label: Text('Inodoro (L)', 
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                  textAlign: TextAlign.center,
+                                ),
+                                numeric: true,
+                              ),
+                            ],
+                            rows: rows
+                                .map(
+                                  (e) => DataRow(
+                                    cells: [
+                                      DataCell(Text(df.format(e.fecha), style: const TextStyle(fontSize: 13))),
+                                      DataCell(
+                                        Text('${e.consumoDucha}', 
+                                          style: const TextStyle(fontSize: 13),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text('${e.consumoInodoro}', 
+                                          style: const TextStyle(fontSize: 13),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                .toList(),
+                          ),
                         ),
                       ),
                     );
@@ -149,35 +153,96 @@ class RegistroDispInteraccionesScreen extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: 3,
+        onTap: (i, ctx) => _handleNavigation(i, ctx),
+      ),
+    );
+  }
+
+  static void _handleNavigation(int index, BuildContext ctx) {
+    switch (index) {
+      case 0:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardGeneralUsuario,
+          (route) => false,
+        );
+        break;
+      case 1:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardConfigurar,
+          (route) => false,
+        );
+        break;
+      case 2:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardVincular,
+          (route) => false,
+        );
+        break;
+      case 3:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.estados,
+          (route) => false,
+        );
+        break;
+      case 4:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardPerfil,
+          (route) => false,
+        );
+        break;
+    }
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  const _BottomNav({required this.currentIndex, required this.onTap});
+  final int currentIndex;
+  final void Function(int index, BuildContext ctx) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: (i) => onTap(i, context),
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: 'Inicio',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: 'Configurar',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.add_circle_outline),
+          selectedIcon: Icon(Icons.add_circle),
+          label: 'Vincular',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.analytics_outlined),
+          selectedIcon: Icon(Icons.analytics),
+          label: 'Estado',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
+          label: 'Perfil',
+        ),
+      ],
     );
   }
 }
 
 /* ====== Soporte UI (igual al mock) ====== */
-
-class _GhostSquare extends StatelessWidget {
-  const _GhostSquare({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 8, offset: const Offset(0, 3))],
-        ),
-        child: Icon(icon),
-      ),
-    );
-  }
-}
 
 class _ChipText extends StatelessWidget {
   const _ChipText({required this.text, required this.color});
