@@ -12,8 +12,6 @@ class BackendService {
   /// El backend guardará este usuario como "activo" para recibir datos del Arduino
   Future<bool> registerActiveUser(String firebaseToken) async {
     try {
-      debugPrint('[BackendService] 📤 Registrando usuario activo en el backend...');
-      
       final body = jsonEncode({
         'token': firebaseToken,
       });
@@ -31,14 +29,10 @@ class BackendService {
         },
       );
       
-      debugPrint('[BackendService] 📥 Respuesta del servidor: ${response.statusCode}');
-      debugPrint('[BackendService]    - Body: ${response.body}');
-      
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         if (responseData['success'] == true) {
-          debugPrint('[BackendService] ✅ Usuario registrado correctamente en el backend');
-          debugPrint('[BackendService]    - UserId: ${responseData['userId']}');
+          debugPrint('[BackendService] ✅ Usuario registrado en el backend');
           return true;
         }
       }
@@ -48,11 +42,9 @@ class BackendService {
       
     } on http.ClientException catch (e) {
       debugPrint('[BackendService] ❌ Error de conexión: $e');
-      // No lanzar excepción, solo retornar false para no bloquear el login
       return false;
     } catch (e) {
       debugPrint('[BackendService] ❌ Error inesperado: $e');
-      // No lanzar excepción, solo retornar false para no bloquear el login
       return false;
     }
   }
@@ -60,8 +52,6 @@ class BackendService {
   /// Elimina el usuario activo del backend (cuando cierra sesión)
   Future<bool> logoutActiveUser() async {
     try {
-      debugPrint('[BackendService] 📤 Desregistrando usuario activo del backend...');
-      
       final response = await http.post(
         Uri.parse('$baseUrl/public/arduino/logout-user'),
         headers: {
@@ -75,7 +65,7 @@ class BackendService {
       );
       
       if (response.statusCode == 200) {
-        debugPrint('[BackendService] ✅ Usuario desregistrado correctamente');
+        debugPrint('[BackendService] ✅ Usuario desregistrado del backend');
         return true;
       }
       
@@ -84,7 +74,6 @@ class BackendService {
       
     } catch (e) {
       debugPrint('[BackendService] ❌ Error al desregistrar usuario: $e');
-      // No lanzar excepción, solo retornar false
       return false;
     }
   }

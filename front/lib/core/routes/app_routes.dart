@@ -7,6 +7,9 @@ import '../../auth/screens/auth_perfil_screen.dart';
 import '../../dashboards/screens/dashboard_general_usuario_screen.dart';
 import '../../dashboards/screens/dashboard_solo_stats_screen.dart';
 import '../../dashboards/screens/dashboard_stats_usuario_screen.dart';
+import '../../dashboards/screens/dashboard_perfil_screen.dart';
+import '../../dashboards/screens/dashboard_vincular_screen.dart';
+import '../../dashboards/screens/dashboard_configurar_screen.dart';
 import '../../chatbot/screens/chatbot_screen.dart';
 import '../../chatbot/screens/chatbot_recomendaciones_screen.dart';
 import '../../tienda/screens/tienda_screen.dart';
@@ -26,6 +29,9 @@ class AppRoutes {
   static const String dashboardGeneralUsuario = '/dashboard/general-usuario';
   static const String dashboardSoloStats = '/dashboard/solo-stats';
   static const String dashboardStatsUsuario = '/dashboard/stats-usuario';
+  static const String dashboardPerfil = '/dashboard/perfil';
+  static const String dashboardVincular = '/dashboard/vincular';
+  static const String dashboardConfigurar = '/dashboard/configurar';
   static const String chatbot = '/chatbot';
   static const String chatbotRecomendaciones  = '/chatbot/recomendaciones';
   static const String tiendaHome       = '/tienda';
@@ -57,6 +63,18 @@ class AppRoutes {
       case dashboardStatsUsuario:
         return MaterialPageRoute(
           builder: (_) => const DashboardStatsUsuarioScreen(),
+        );
+      case dashboardPerfil:
+        return MaterialPageRoute(
+          builder: (_) => const DashboardPerfilScreen(),
+        );
+      case dashboardVincular:
+        return MaterialPageRoute(
+          builder: (_) => const DashboardVincularScreen(),
+        );
+      case dashboardConfigurar:
+        return MaterialPageRoute(
+          builder: (_) => const DashboardConfigurarScreen(),
         );
          case chatbot:
         return MaterialPageRoute(builder: (_) => const ChatbotScreen());

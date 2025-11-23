@@ -120,14 +120,17 @@ class _DashboardGeneralUsuarioScreenState extends State<DashboardGeneralUsuarioS
                 );
               }
               break;
-            case 1: /* Navigator.pushNamed(ctx, AppRoutes.configurar); */
+            case 1:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardConfigurar);
               break;
-            case 2: /* Navigator.pushNamed(ctx, AppRoutes.vincular);   */
+            case 2:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardVincular);
               break;
             case 3: /* Navigator.pushNamed(ctx, AppRoutes.estado);     */
               Navigator.pushNamed(ctx, AppRoutes.estados);
               break;
-            case 4: /* Navigator.pushNamed(ctx, AppRoutes.authProfile);*/
+            case 4:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardPerfil);
               break;
           }
         },
