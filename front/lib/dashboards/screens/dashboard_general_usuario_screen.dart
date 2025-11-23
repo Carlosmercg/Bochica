@@ -404,7 +404,7 @@ class _BarsCardState extends State<_BarsCard> {
           GestureDetector(
             onTap: () => Navigator.pushNamed(
               context,
-              AppRoutes.dashboardStatsUsuario,
+              AppRoutes.estados,
             ),
             child: Text('> consulta tu ecosistema', style: brand.link),
           ),
@@ -428,11 +428,10 @@ class _ShowerGoalCardState extends State<_ShowerGoalCard> {
   @override
   void initState() {
     super.initState();
-    _ecoRecognizer =
-        TapGestureRecognizer()
-          ..onTap = () {
-            Navigator.pushNamed(context, AppRoutes.dashboardStatsUsuario);
-          };
+    _ecoRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        Navigator.pushNamed(context, AppRoutes.estados);
+      };
   }
 
   @override
