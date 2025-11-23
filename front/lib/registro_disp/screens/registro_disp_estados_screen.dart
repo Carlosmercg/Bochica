@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/services/user_disp_service.dart';
+import '../../tienda/services/products_repository.dart';
 
 class RegistroDispEstadosScreen extends StatelessWidget {
   const RegistroDispEstadosScreen({super.key});
@@ -8,13 +11,29 @@ class RegistroDispEstadosScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const brand = _Brand();
+    final authService = context.watch<AuthService>();
+    final user = authService.currentUser;
+    final userDispService = UserDispService();
+    final productsRepository = ProductsRepository();
 
-    // Datos mock (cámbialos luego por Firestore si quieres)
-    final items = const [
-      _Device(title: 'Baño Piso 1', kind: _Kind.sanitario, owner: 'inteligente', connected: true),
-      _Device(title: 'Baño Piso 2', kind: _Kind.sanitario, owner: 'inteligente', connected: true),
-      _Device(title: 'Ducha Pedro', kind: _Kind.ducha,     owner: 'inteligente', connected: true),
-    ];
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: brand.bg,
+        appBar: AppBar(
+          backgroundColor: brand.bg,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
+          centerTitle: true,
+          title: const Text('Estado', style: TextStyle(fontWeight: FontWeight.w800)),
+        ),
+        body: const Center(
+          child: Text('No hay sesión activa'),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: brand.bg,
@@ -29,36 +48,165 @@ class RegistroDispEstadosScreen extends StatelessWidget {
         title: const Text('Estado', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, i) => _EstadoTile(
-            device: items[i],
-            onHistory: () {
-              final correo = FirebaseAuth.instance.currentUser?.email;
+        child: StreamBuilder(
+          stream: userDispService.streamUserDevices(user.uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              if (correo == null || correo.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Inicia sesión para ver el historial')),
-                );
-                return;
-              }
-
-              Navigator.pushNamed(
-                context,
-                AppRoutes.estadosHistorial,
-                arguments: {
-                  'deviceTitle': items[i].title,
-                  'kind': items[i].kind == _Kind.sanitario ? 'sanitario' : 'ducha',
-                  'connected': items[i].connected,
-                  'correo': correo, // 👈 se envía al historial
-                },
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
               );
-            },
-          ),
+            }
+
+            final devices = snapshot.data ?? [];
+            final activeDevices = devices.where((d) => d.activo).toList();
+
+            if (activeDevices.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('No hay dispositivos vinculados'),
+                ),
+              );
+            }
+
+            return FutureBuilder(
+              future: productsRepository.watchAll().first,
+              builder: (context, productsSnapshot) {
+                final productos = productsSnapshot.data ?? [];
+                final productMap = {for (var p in productos) p.id: p};
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  itemCount: activeDevices.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) {
+                    final device = activeDevices[i];
+                    final producto = productMap[device.tipoProducto];
+                    final kind = producto?.nombre.toLowerCase().contains('sanitario') == true
+                        ? _Kind.sanitario
+                        : _Kind.ducha;
+
+                    return _EstadoTile(
+                      device: _Device(
+                        title: device.nombre,
+                        kind: kind,
+                        owner: 'inteligente',
+                        connected: device.activo,
+                      ),
+                      onHistory: () {
+                        final correo = user.email;
+
+                        if (correo == null || correo.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Inicia sesión para ver el historial')),
+                          );
+                          return;
+                        }
+
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.estadosHistorial,
+                          arguments: {
+                            'deviceTitle': device.nombre,
+                            'kind': kind == _Kind.sanitario ? 'sanitario' : 'ducha',
+                            'connected': device.activo,
+                            'correo': correo,
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: 3,
+        onTap: (i, ctx) => _handleNavigation(i, ctx),
+      ),
+    );
+  }
+
+  static void _handleNavigation(int index, BuildContext ctx) {
+    switch (index) {
+      case 0:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardGeneralUsuario,
+          (route) => false,
+        );
+        break;
+      case 1:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardConfigurar,
+          (route) => false,
+        );
+        break;
+      case 2:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardVincular,
+          (route) => false,
+        );
+        break;
+      case 3:
+        // Ya estamos en estado
+        break;
+      case 4:
+        Navigator.pushNamedAndRemoveUntil(
+          ctx,
+          AppRoutes.dashboardPerfil,
+          (route) => false,
+        );
+        break;
+    }
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  const _BottomNav({required this.currentIndex, required this.onTap});
+  final int currentIndex;
+  final void Function(int index, BuildContext ctx) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: (i) => onTap(i, context),
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: 'Inicio',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: 'Configurar',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.add_circle_outline),
+          selectedIcon: Icon(Icons.add_circle),
+          label: 'Vincular',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.analytics_outlined),
+          selectedIcon: Icon(Icons.analytics),
+          label: 'Estado',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
+          label: 'Perfil',
+        ),
+      ],
     );
   }
 }
@@ -202,5 +350,5 @@ class _PillButton extends StatelessWidget {
 
 class _Brand {
   const _Brand();
-  final Color bg = const Color(0xFFF5F1F6);
+  final Color bg = const Color(0xFFF5F6FA);
 }

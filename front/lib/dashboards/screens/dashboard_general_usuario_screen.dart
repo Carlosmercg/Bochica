@@ -120,14 +120,17 @@ class _DashboardGeneralUsuarioScreenState extends State<DashboardGeneralUsuarioS
                 );
               }
               break;
-            case 1: /* Navigator.pushNamed(ctx, AppRoutes.configurar); */
+            case 1:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardConfigurar);
               break;
-            case 2: /* Navigator.pushNamed(ctx, AppRoutes.vincular);   */
+            case 2:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardVincular);
               break;
             case 3: /* Navigator.pushNamed(ctx, AppRoutes.estado);     */
               Navigator.pushNamed(ctx, AppRoutes.estados);
               break;
-            case 4: /* Navigator.pushNamed(ctx, AppRoutes.authProfile);*/
+            case 4:
+              Navigator.pushNamed(ctx, AppRoutes.dashboardPerfil);
               break;
           }
         },
@@ -401,7 +404,7 @@ class _BarsCardState extends State<_BarsCard> {
           GestureDetector(
             onTap: () => Navigator.pushNamed(
               context,
-              AppRoutes.dashboardStatsUsuario,
+              AppRoutes.estados,
             ),
             child: Text('> consulta tu ecosistema', style: brand.link),
           ),
@@ -425,11 +428,10 @@ class _ShowerGoalCardState extends State<_ShowerGoalCard> {
   @override
   void initState() {
     super.initState();
-    _ecoRecognizer =
-        TapGestureRecognizer()
-          ..onTap = () {
-            Navigator.pushNamed(context, AppRoutes.dashboardStatsUsuario);
-          };
+    _ecoRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        Navigator.pushNamed(context, AppRoutes.estados);
+      };
   }
 
   @override
