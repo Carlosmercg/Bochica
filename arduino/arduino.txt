@@ -7,7 +7,7 @@ const char* ssid = "*******";
 const char* password = "******";
 
 // ⚙️ URL del backend (usa tu IP local, NO localhost)
-const char* serverUrl = "http://192.168.1.4:8080/public/arduino/data";
+const char* serverUrl = "http://192.*****:8080/public/arduino/data";
 
 // Pines del ESP8266 (GPIO equivalentes a D5 y D6)
 #define BOTON_TOGGLE 14      // D5
@@ -63,9 +63,9 @@ void loop() {
 
 void enviarDatos(bool toggle, bool momentaneo) {
   if (WiFi.status() == WL_CONNECTED) {
-    WiFiClient client;          // 👈 nuevo objeto cliente
+    WiFiClient client;         
     HTTPClient http;
-    http.begin(client, serverUrl);   // 👈 nueva sintaxis obligatoria
+    http.begin(client, serverUrl);   
     http.addHeader("Content-Type", "application/json");
 
     // Construir JSON
